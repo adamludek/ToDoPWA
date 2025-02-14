@@ -68,6 +68,13 @@ self.addEventListener("push", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+    const url = new URL(event.request.url);
+
+    // 📌 Ignorujemy zasoby z rozszerzeń Chrome, aby uniknąć błędów
+    if (url.protocol === "chrome-extension:" || url.origin.includes("chrome-extension")) {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
@@ -90,7 +97,7 @@ self.addEventListener("fetch", (event) => {
                 });
             }).catch(() => {
                 console.warn(`⚠ Błąd pobierania: ${event.request.url}, a brak w cache`);
-                return caches.match("/offline.html"); // Opcjonalnie: podstawić stronę offline
+                return new Response("Błąd: Brak sieci i brak pliku w cache", { status: 503 });
             });
         })
     );
