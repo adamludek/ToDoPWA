@@ -92,10 +92,14 @@ może być **instalowana na telefonie** i obsługuje **powiadomienia push**.
 
 ## ⚡ Strategia cache w Service Worker
 
-Aplikacja wykorzystuje **Network First**:
-- **Jeśli połączenie internetowe jest dostępne**, dane są pobierane z sieci i zapisywane w cache.
-- **Jeśli użytkownik jest offline**, dane są ładowane z cache.
-- Pliki statyczne (`index.html`, `manifest.json`, ikony) są cache'owane podczas instalacji Service Workera.
+Aplikacja wykorzystuje strategię **Cache First + Background Update**:
+
+- **Najpierw sprawdzane jest cache** – jeśli zasób jest dostępny, ładowany jest natychmiast, co zapewnia szybkie działanie aplikacji.
+- **W tle pobierana jest nowa wersja zasobu z sieci** – jeśli połączenie jest dostępne, cache zostaje automatycznie zaktualizowane.
+- **Jeśli zasób nie istnieje w cache**, aplikacja pobiera go z sieci i zapisuje w cache do przyszłego użycia.
+- **W przypadku braku sieci i braku zasobu w cache**, użytkownik może napotkać błąd ładowania danego zasobu.
+
+📌 Dzięki temu aplikacja działa płynnie offline, a jednocześnie użytkownicy mają zawsze dostęp do najnowszej wersji zasobów bez opóźnień w ich ładowaniu. 🚀
 
 ---
 

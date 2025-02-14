@@ -67,27 +67,31 @@ self.addEventListener("push", (event) => {
     );
 });
 
-// 📌 Fetch z priorytetem sieciowym (Network First + obsługa offline)
 self.addEventListener("fetch", (event) => {
-    const url = new URL(event.request.url);
-
-    // 📌 Ignorujemy zasoby z rozszerzeń Chrome, aby uniknąć błędów
-    if (url.protocol === "chrome-extension:") {
-        return;
-    }
-
     event.respondWith(
-        caches.match(event.request).then(response => {
-            if(response) {
-                return response
+        caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+                // 🔄 Pobieramy nową wersję w tle i aktualizujemy cache
+                fetch(event.request).then((networkResponse) => {
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, networkResponse.clone());
+                        console.log(`📦 Zaktualizowano cache dla: ${event.request.url}`);
+                    });
+                }).catch(() => console.warn("⚠ Brak sieci, używam cache"));
+
+                return cachedResponse; // Zwracamy natychmiast wersję z cache
             }
-            return fetch(event.request)
-            .then(response => {
-            return caches.open(CACHE_NAME).then(cache => {cache.put(event.request, response.clone())
-                return response
-            })
+
+            // 📡 Jeśli pliku nie ma w cache, pobieramy z sieci
+            return fetch(event.request).then((networkResponse) => {
+                return caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, networkResponse.clone());
+                    return networkResponse;
+                });
+            }).catch(() => {
+                console.warn(`⚠ Błąd pobierania: ${event.request.url}, a brak w cache`);
+                return caches.match("/offline.html"); // Opcjonalnie: podstawić stronę offline
+            });
         })
-        })
-    )
-    }
-);
+    );
+});
